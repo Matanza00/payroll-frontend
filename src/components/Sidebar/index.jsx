@@ -23,27 +23,20 @@ import { FaClockRotateLeft } from 'react-icons/fa6';
 import { IoIosWarning } from 'react-icons/io';
 
 const links = [
-  {
-    id: 'user',
-    path: '/users',
-    icon: <HiUserGroup className="w-5 h-5" />,
-    text: 'Users',
-    styleChecker: 'users',
-  },
-  {
-    id: 'role',
-    path: '/roles',
-    icon: <TbSubtask className="w-5 h-5" />,
-    text: 'Roles',
-    styleChecker: 'roles',
-  },
-  {
-    id: 'user',
-    path: '/users',
-    icon: <HiUserGroup className="w-5 h-5" />,
-    text: 'Users',
-    styleChecker: 'users',
-  },
+  // {
+  //   id: 'user',
+  //   path: '/users',
+  //   icon: <HiUserGroup className="w-5 h-5" />,
+  //   text: 'Users',
+  //   styleChecker: 'users',
+  // },
+  // {
+  //   id: 'role',
+  //   path: '/roles',
+  //   icon: <TbSubtask className="w-5 h-5" />,
+  //   text: 'Roles',
+  //   styleChecker: 'roles',
+  // },
 ];
 
 const Sidebar = ({ sidebarOpen, setSidebarOpen }) => {
@@ -132,17 +125,55 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen }) => {
       text: 'Users',
       styleChecker: 'users',
     });
-
-    {
-      adminRole &&
-        allLinks.push({
-          id: 'emergency',
-          path: '/emergency-maintenance',
-          icon: <IoIosWarning className="w-6 h-6" />,
-          text: 'Emergency Maintenance',
-          styleChecker: 'emergency',
-        });
-    }
+    allLinks.push({
+      id: 'payroll',
+      path: '/payroll',
+      icon: <HiUserGroup className="w-5 h-5" />,
+      text: 'Payroll',
+      styleChecker: 'payroll',
+    });
+    allLinks.push({
+      id: 'benefits',
+      path: '/benefits',
+      icon: <HiUserGroup className="w-5 h-5" />,
+      text: 'Benefits',
+      styleChecker: 'benefits',
+    });
+    allLinks.push({
+      id: 'expenses',
+      path: '/expenses',
+      icon: <HiUserGroup className="w-5 h-5" />,
+      text: 'Expenses',
+      styleChecker: 'expenses',
+    });
+    allLinks.push({
+      id: 'payslip',
+      path: '/payslip',
+      icon: <HiUserGroup className="w-5 h-5" />,
+      text: 'Payslip',
+      styleChecker: 'payslip',
+    });
+    allLinks.push({
+      id: 'deposits',
+      path: '/deposits',
+      icon: <HiUserGroup className="w-5 h-5" />,
+      text: 'Deposits',
+      styleChecker: 'deposits',
+    });
+    allLinks.push({
+      id: 'attendance',
+      path: '/attendance',
+      icon: <HiUserGroup className="w-5 h-5" />,
+      text: 'Attendance',
+      styleChecker: 'attendance',
+    });
+    allLinks.push({
+      id: 'tax-management',
+      path: '/tax-management',
+      icon: <HiUserGroup className="w-5 h-5" />,
+      text: 'Tax-management',
+      styleChecker: 'tax-management',
+    });
 
     setFilteredLinks(allLinks);
     return () => {};

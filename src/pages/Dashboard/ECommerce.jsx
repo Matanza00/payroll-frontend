@@ -26,7 +26,7 @@ import CardDataStats from '../../components/CardDataStats';
 import DefaultLayout from '../../layout/DefaultLayout';
 import { FaShippingFast } from 'react-icons/fa';
 import { TbTruckOff } from 'react-icons/tb';
-import VehicleMap from './Map';
+// import VehicleMap from './Map';
 import { useSelector } from 'react-redux';
 
 const ECommerce = () => {
@@ -479,12 +479,12 @@ const ECommerce = () => {
               Live Vehicle Tracking
             </h6>
           </div>
-          <VehicleMap
+          {/* <VehicleMap
             selectedStation={selectedStation}
             userStation={userStation}
             userRole={userRole}
             vehicleData={vehicleData?.data || []}
-          />
+          /> */}
         </ResponsiveContainer>
       </div>
 
@@ -549,20 +549,22 @@ const ECommerce = () => {
           </div>
         </div>
         <div className="mt-4 flex justify-end space-x-4">
-          {['Pending', 'Approved', 'Rejected', 'Completed'].map((status, index) => (
-            <div key={index} className="flex items-center space-x-2">
-              <span
-                className={`block h-3 w-3 rounded-full ${colorMap[status]}`}
-              ></span>
-              <p className="text-sm font-medium text-black dark:text-white">
-                {status}
-              </p>
-              <p className="ml-2 text-sm font-medium text-black dark:text-white">
-                {fuelStatusData.find((data) => data.name === status)?.value ||
-                  0}
-              </p>
-            </div>
-          ))}
+          {['Pending', 'Approved', 'Rejected', 'Completed'].map(
+            (status, index) => (
+              <div key={index} className="flex items-center space-x-2">
+                <span
+                  className={`block h-3 w-3 rounded-full ${colorMap[status]}`}
+                ></span>
+                <p className="text-sm font-medium text-black dark:text-white">
+                  {status}
+                </p>
+                <p className="ml-2 text-sm font-medium text-black dark:text-white">
+                  {fuelStatusData.find((data) => data.name === status)?.value ||
+                    0}
+                </p>
+              </div>
+            ),
+          )}
         </div>
       </div>
 

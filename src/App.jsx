@@ -1,47 +1,66 @@
 import { useEffect, useState } from 'react';
-import UploadWidget from './components/UploadWidget';
 import { Navigate, Outlet, Route, Routes, useLocation } from 'react-router-dom';
 import { useSelector } from 'react-redux';
-
-// import { BrowserRouter as Router, Route, Switch } from 'react-router-dom';
 import Loader from './common/Loader';
-import PageTitle from './components/PageTitle';
 import SignIn from './pages/Authentication/SignIn';
 import SignUp from './pages/Authentication/SignUp';
-import Calendar from './pages/Calendar';
-import Chart from './pages/Chart';
+import SetPassword from './pages/SetPassword/SetPassword';
 import ECommerce from './pages/Dashboard/ECommerce';
-import FormElements from './pages/Form/FormElements';
-import FormLayout from './pages/Form/FormLayout';
-import Profile from './pages/Profile';
-import Settings from './pages/Settings';
-import Tables from './pages/Tables';
-import Alerts from './pages/UiElements/Alerts';
-import Buttons from './pages/UiElements/Buttons';
+import Roles from './pages/Roles';
+import RoleUpdate from './pages/Roles/RoleUpdate';
 import Companies from './pages/Companies';
 import CompanyView from './pages/Companies/CompanyView';
 import CompanyForm from './pages/Companies/CompanyForm';
-
-import SetPassword from './pages/SetPassword/SetPassword';
-import Roles from './pages/Roles';
-import RoleUpdate from './pages/Roles/RoleUpdate';
 import Users from './pages/Users/index';
-import serAddForm from './pages/Users/UsersAddForm';
+import UserAddForm from './pages/Users/UsersAddForm';
 import UserUpdateForm from './pages/Users/UsersUpdateForm';
 import UserView from './pages/Users/UsersView';
-import UserAddForm from './pages/Users/UsersAddForm';
+
+// Import your newly created components
+import PayrollIndex from './pages/Payroll/index';
+import PayrollAddForm from './pages/Payroll/PayrollAddForm';
+import PayrollUpdateForm from './pages/Payroll/PayrollUpdateForm';
+import PayrollView from './pages/Payroll/PayrollView';
+
+import PayslipIndex from './pages/Payslips';
+import PayslipAddForm from './pages/Payslips/PayslipAddForm';
+import PayslipUpdateForm from './pages/Payslips/PayslipUpdateForm';
+import PayslipView from './pages/Payslips/PaySlipView';
+
+import BenefitsIndex from './pages/Benefits/index';
+import BenefitsAddForm from './pages/Benefits/BenefitsAddForm';
+import BenefitsUpdateForm from './pages/Benefits/BenefitsUpdateForm';
+import BenefitsView from './pages/Benefits/BenefitsView';
+
+import ExpenseIndex from './pages/Expense/index';
+import ExpenseAddForm from './pages/Expense/ExpenseAddForm';
+import ExpenseUpdateForm from './pages/Expense/ExpenseUpdateForm';
+import ExpenseView from './pages/Expense/ExpenseView';
+
+import DepositIndex from './pages/Deposit/index';
+import DepositAddForm from './pages/Deposit/DepositAddForm';
+import DepositUpdateForm from './pages/Deposit/DepositUpdateForm';
+import DepositView from './pages/Deposit/DepositView';
+
+import AttendanceIndex from './pages/Attendance/index';
+import AttendanceAddForm from './pages/Attendance/AttendanceAddForm';
+import AttendanceUpdateForm from './pages/Attendance/AttendanceUpdateForm';
+import AttendanceView from './pages/Attendance/AttendanceView';
+
+import TaxManagementIndex from './pages/TaxManagement/index';
+import TaxManagementAddForm from './pages/TaxManagement/TaxManagementAddForm';
+import TaxManagementUpdateForm from './pages/TaxManagement/TaxManagementUpdateForm';
+import TaxManagementView from './pages/TaxManagement/TaxManagementView';
 
 function App() {
   const [loading, setLoading] = useState(true);
   const { pathname } = useLocation();
-  let auth = useSelector((state) => state.auth);
-  const PrivateRoutes = () => {
-    return auth.isAuthenticated ? <Outlet /> : <Navigate to="/auth/signin" />;
-  };
+  const auth = useSelector((state) => state.auth);
 
   useEffect(() => {
     window.scrollTo(0, 0);
   }, [pathname]);
+
   useEffect(() => {
     setTimeout(() => setLoading(false), 1000);
   }, []);
@@ -51,7 +70,6 @@ function App() {
   ) : (
     <>
       <Routes>
-        {/* set-admin-password/b21bb23abc013133753ad2cb70016eaf816bd55dcfbaf113d03e49301e55efb3 */}
         <Route path="/set-admin-password/:token" element={<SetPassword />} />
         <Route path="/set-password/:token" element={<SetPassword />} />
         <Route path="/auth/signin" element={<SignIn />} />
@@ -65,7 +83,6 @@ function App() {
             )
           }
         />
-        {/* <Route element={<PrivateRoutes />}> */}
         <Route path="/dashboard" element={<ECommerce />} />
         <Route path="/roles" element={<Roles />} />
         <Route path="/roles/update" element={<RoleUpdate />} />
@@ -74,16 +91,62 @@ function App() {
         <Route path="/companies/add" element={<CompanyForm />} />
         <Route path="/companies/update/:id" element={<CompanyForm />} />
 
-        {/* CMS Path */}
+        {/* User Management Routes */}
         <Route path="/users" element={<Users />} />
         <Route path="/users/view/:id" element={<UserView />} />
         <Route path="/users/add" element={<UserAddForm />} />
         <Route path="/users/update/:id" element={<UserUpdateForm />} />
 
-        {/*  <Route path="/cms_managers/update/:id" element={<ManagersUpdateForm />} />
-        <Route path="/cms_managers/view/:id" element={<ManagerView />} />  */}
+        {/* Payroll Management Routes */}
+        <Route path="/payroll" element={<PayrollIndex />} />
+        <Route path="/payroll/add" element={<PayrollAddForm />} />
+        <Route path="/payroll/update/:id" element={<PayrollUpdateForm />} />
+        <Route path="/payroll/view/:id" element={<PayrollView />} />
 
-        {/* CMS Path */}
+        {/* PaySlip Management Routes */}
+        <Route path="/payslip" element={<PayslipIndex />} />
+        <Route path="/payslip/add" element={<PayslipAddForm />} />
+        <Route path="/payslip/update/:id" element={<PayslipUpdateForm />} />
+        <Route path="/payslip/view/:id" element={<PayslipView />} />
+
+        {/* Benefits Management Routes */}
+        <Route path="/benefits" element={<BenefitsIndex />} />
+        <Route path="/benefits/add" element={<BenefitsAddForm />} />
+        <Route path="/benefits/update/:id" element={<BenefitsUpdateForm />} />
+        <Route path="/benefits/view/:id" element={<BenefitsView />} />
+
+        {/* Expense Management Routes */}
+        <Route path="/expenses" element={<ExpenseIndex />} />
+        <Route path="/expenses/add" element={<ExpenseAddForm />} />
+        <Route path="/expenses/update/:id" element={<ExpenseUpdateForm />} />
+        <Route path="/expenses/view/:id" element={<ExpenseView />} />
+
+        {/* Direct Deposit Management Routes */}
+        <Route path="/deposits" element={<DepositIndex />} />
+        <Route path="/deposits/add" element={<DepositAddForm />} />
+        <Route path="/deposits/update/:id" element={<DepositUpdateForm />} />
+        <Route path="/deposits/view/:id" element={<DepositView />} />
+
+        {/* Attendance Management Routes */}
+        <Route path="/attendance" element={<AttendanceIndex />} />
+        <Route path="/attendance/add" element={<AttendanceAddForm />} />
+        <Route
+          path="/attendance/update/:id"
+          element={<AttendanceUpdateForm />}
+        />
+        <Route path="/attendance/view/:id" element={<AttendanceView />} />
+
+        {/* Tax Management Routes */}
+        <Route path="/tax-management" element={<TaxManagementIndex />} />
+        <Route path="/tax-management/add" element={<TaxManagementAddForm />} />
+        <Route
+          path="/tax-management/update/:id"
+          element={<TaxManagementUpdateForm />}
+        />
+        <Route
+          path="/tax-management/view/:id"
+          element={<TaxManagementView />}
+        />
       </Routes>
     </>
   );

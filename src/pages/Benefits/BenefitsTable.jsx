@@ -2,33 +2,41 @@ import { CiEdit } from 'react-icons/ci';
 import { IoEyeOutline } from 'react-icons/io5';
 import { RiDeleteBinLine } from 'react-icons/ri';
 import { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import {
-  useGetAllBenefitsQuery,
+  useGetBenefitsByCompanyIdQuery, // Updated hook to accept pagination and search parameters
   useDeleteBenefitMutation,
 } from '../../services/benefitsSlice';
 import Loader from '../../common/Loader';
 import DeleteModal from '../../components/DeleteModal';
 import { FcNext, FcPrevious } from 'react-icons/fc';
 import useToast from '../../hooks/useToast';
+import { useSelector } from 'react-redux';
 
 const BenefitsTable = ({ searchTerm }) => {
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(10);
   const [totalPages, setTotalPages] = useState(0);
-  const [startIndex, setStartIndex] = useState(0);
-  const [benefitsToShow, setBenefitsToShow] = useState([]);
-  const [isLoading, setIsLoading] = useState(false);
   const [pages, setPages] = useState([]);
+  const [benefitsToShow, setBenefitsToShow] = useState([]);
   const navigate = useNavigate();
   const { showErrorToast, showSuccessToast } = useToast();
+  const { user } = useSelector((state) => state.auth);
 
   const {
     data: benefits,
     isLoading: getBenefitsLoading,
     isError,
     refetch,
-  } = useGetAllBenefitsQuery();
+  } = useGetBenefitsByCompanyIdQuery({
+    companyId: user?.companyId,
+    page,
+    limit,
+    searchTerm,
+    sortBy: 'benefitType', // Example of passing sortBy
+    sortType: 'asc', // Example of passing sortType
+  });
+
   const [deleteBenefit, { isLoading: isDeleteLoading }] =
     useDeleteBenefitMutation();
   const [deleteId, setDeleteId] = useState(null);
@@ -38,19 +46,11 @@ const BenefitsTable = ({ searchTerm }) => {
   }, [searchTerm]);
 
   useEffect(() => {
-    if (!getBenefitsLoading && !isError && benefits?.length > 0) {
-      const totalPagesCount = Math.ceil(benefits.length / limit);
-      setTotalPages(totalPagesCount);
-      const updatedBenefits = benefits.slice(startIndex, startIndex + limit);
-      setBenefitsToShow(updatedBenefits);
-      const updatedPages = Array.from(
-        { length: totalPagesCount },
-        (_, i) => i + 1,
-      );
-      setPages(updatedPages);
-      setIsLoading(false);
+    if (!getBenefitsLoading && !isError && benefits?.results > 0) {
+      setTotalPages(Math.ceil(benefits.results / limit));
+      setBenefitsToShow(benefits.data);
     }
-  }, [getBenefitsLoading, isError, benefits, limit, startIndex]);
+  }, [getBenefitsLoading, isError, benefits, limit]);
 
   const handlePage = (e) => {
     setPage(parseInt(e.target.textContent));
@@ -110,7 +110,7 @@ const BenefitsTable = ({ searchTerm }) => {
                 <tr key={benefit.id}>
                   <td className="border-b border-[#eee] py-4 px-4 pl-9 dark:border-strokedark xl:pl-11">
                     <p className="font-medium text-black dark:text-white">
-                      {startIndex + index + 1}
+                      {(page - 1) * limit + index + 1}
                     </p>
                   </td>
                   <td className="border-b border-[#eee] py-4 px-4 dark:border-strokedark">
@@ -171,9 +171,7 @@ const BenefitsTable = ({ searchTerm }) => {
       </div>
       <div className="flex justify-center">
         <div className="w-full flex flex-col justify-between">
-          {/* Container for Rows Per Page Dropdown and Page Numbers */}
           <div className="flex items-center justify-between px-4 py-2">
-            {/* Rows Per Page Dropdown */}
             <div className="dropdown inline-block relative">
               <span>Rows per page:</span>
               <select
@@ -189,9 +187,7 @@ const BenefitsTable = ({ searchTerm }) => {
                 <option value={50}>50</option>
               </select>
             </div>
-            {/* Page Navigation Buttons */}
             <div className="flex items-center justify-end flex-grow space-x-2">
-              {/* Previous Button */}
               <button
                 onClick={handlePrevPage}
                 disabled={page === 1}
@@ -203,9 +199,7 @@ const BenefitsTable = ({ searchTerm }) => {
               >
                 <FcPrevious />
               </button>
-              {/* Selectable Page Numbers */}
               <div className="flex space-x-2">
-                {/* Render first page */}
                 {totalPages > 1 && (
                   <button
                     key={1}
@@ -219,11 +213,9 @@ const BenefitsTable = ({ searchTerm }) => {
                     {1}
                   </button>
                 )}
-                {/* Render ellipsis if necessary */}
                 {page > 4 && totalPages > 2 && (
                   <span className="px-3 py-1">...</span>
                 )}
-                {/* Render pages closer to the current page */}
                 {pages
                   .filter(
                     (pageNumber) =>
@@ -242,11 +234,9 @@ const BenefitsTable = ({ searchTerm }) => {
                       {pageNumber}
                     </button>
                   ))}
-                {/* Render ellipsis if necessary */}
                 {page < totalPages - 3 && totalPages > 2 && (
                   <span className="px-3 py-1">...</span>
                 )}
-                {/* Render last page */}
                 {totalPages > 1 && (
                   <button
                     key={totalPages}
@@ -261,7 +251,6 @@ const BenefitsTable = ({ searchTerm }) => {
                   </button>
                 )}
               </div>
-              {/* Next Button */}
               <button
                 onClick={handleNextPage}
                 disabled={page === totalPages}

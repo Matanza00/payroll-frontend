@@ -2,6 +2,17 @@ import { apiSlice } from './apiSlice';
 
 export const benefitsSlice = apiSlice.injectEndpoints({
   endpoints: (builder) => ({
+    // Get all benefits records using Pagination and Searching API
+    getBenefitsByCompanyId: builder.query({
+      query: ({ companyId, page, limit, searchTerm }) => {
+        if (searchTerm) {
+          return `/benefits/company/${companyId}?search=${searchTerm}&page=${page}&limit=${limit}`;
+        } else {
+          return `/benefits/company/${companyId}?page=${page}&limit=${limit}`;
+        }
+      },
+      providesTags: ['Benefit'],
+    }),
     // Get all benefits records
     getAllBenefits: builder.query({
       query: () => '/benefits',
@@ -49,6 +60,7 @@ export const benefitsSlice = apiSlice.injectEndpoints({
 });
 
 export const {
+  useGetBenefitsByCompanyIdQuery,
   useGetAllBenefitsQuery,
   useGetBenefitQuery,
   useCreateBenefitMutation,

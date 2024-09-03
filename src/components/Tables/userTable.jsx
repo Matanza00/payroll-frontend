@@ -39,54 +39,61 @@ const UserTable = ({ searchTerm }) => {
   const navigate = useNavigate();
   const { showErrorToast, showSuccessToast } = useToast();
   const { user } = useSelector((state) => state.auth);
-  const { userData } = useGetUserByCompanyIdQuery({
-    companyId: user?.companyId,
-    page,
-    limit,
-    searchTerm,
-  });
   const {
     data,
     isError,
     error,
     isLoading: getUsersLoading,
     refetch,
-  } = useGetAllUsersInfoQuery();
+  } = useGetUserByCompanyIdQuery({
+    companyId: user?.companyId,
+    page,
+    limit,
+    searchTerm,
+  });
+  const { userData } = useGetAllUsersInfoQuery();
 
   console.log('first', data);
+  console.log('UserData', userData);
 
   useEffect(() => {
     refetch();
   }, [searchTerm]);
-  console.log(data);
+
   useEffect(() => {
     if (!getUsersLoading && !isError && data?.results > 0) {
       const totalPagesCount = Math.ceil(data.results / limit);
       setTotalPages(totalPagesCount);
       const updatedUsers = data.data.slice(startIndex, startIndex + limit);
       setUsersToShow(updatedUsers);
-      const updatedPages = Array.from(
-        { length: totalPagesCount },
-        (_, i) => i + 1,
-      );
+
+      // Calculate page numbers dynamically based on total pages
+      let updatedPages = [];
+      if (totalPagesCount <= 5) {
+        updatedPages = Array.from({ length: totalPagesCount }, (_, i) => i + 1);
+      } else {
+        if (page <= 3) {
+          updatedPages = [1, 2, 3, 4, 5];
+        } else if (page >= totalPagesCount - 2) {
+          updatedPages = [
+            totalPagesCount - 4,
+            totalPagesCount - 3,
+            totalPagesCount - 2,
+            totalPagesCount - 1,
+            totalPagesCount,
+          ];
+        } else {
+          updatedPages = [page - 2, page - 1, page, page + 1, page + 2];
+        }
+      }
       setPages(updatedPages);
       setIsLoading(false);
     }
-  }, [getUsersLoading, isError, data, limit, startIndex]);
+  }, [getUsersLoading, isError, data, limit, startIndex, page, totalPages]);
 
   const [DeleteUser, { isLoading: isDeleteLoading }] = useDeleteUserMutation();
   const [deleteId, setDeleteId] = useState(null);
 
-  // const deleteUser = async (id) => {
-  //   console.log(id);
-  //   try {
-  //     await DeleteUser(id).unwrap();
-  //     showSuccessToast('User Deleted Successfully!');
-  //   } catch (err) {
-  //     console.log(err);
-  //     showErrorToast(`An error has occurred while deleting user`);
-  //   }
-  // };
   const deleteUser = async (id) => {
     try {
       await DeleteUser(id).unwrap();
@@ -100,9 +107,6 @@ const UserTable = ({ searchTerm }) => {
   if (getUsersLoading) return <Loader />;
   if (isError) return <div>Error occurred while fetching users.</div>;
   if (!data?.data?.length) return <div>No Users Found!</div>;
-
-  console.log('----->', data);
-  // let role = roleValue(data?.data?.Role?.roleName);
 
   return (
     <>
@@ -120,9 +124,6 @@ const UserTable = ({ searchTerm }) => {
                 <th className="min-w-[250px] py-4 px-4 text-black dark:text-white">
                   Name
                 </th>
-                <th className="min-w-[250px] py-4 px-4 text-black dark:text-white">
-                  Station
-                </th>
 
                 <th className="py-4 px-4 text-black dark:text-white">
                   Employee Id
@@ -137,7 +138,6 @@ const UserTable = ({ searchTerm }) => {
             </thead>
             <tbody>
               {data?.data.map((e, key) => (
-                // let role = roleValue(e?.Role?.roleName);
                 <tr key={key}>
                   <td className="border-b border-[#eee] py-4 px-4 pl-9 dark:border-strokedark xl:pl-11">
                     <p className="font-medium text-black dark:text-white">
@@ -156,11 +156,6 @@ const UserTable = ({ searchTerm }) => {
                   </td>
                   <td className="border-b border-[#eee] py-4 px-4 dark:border-strokedark">
                     <p className="font-medium text-black dark:text-white">
-                      {e?.station}
-                    </p>
-                  </td>
-                  <td className="border-b border-[#eee] py-4 px-4 dark:border-strokedark">
-                    <p className="font-medium text-black dark:text-white">
                       {e?.employeeId ?? 'none'}
                     </p>
                   </td>
@@ -171,7 +166,7 @@ const UserTable = ({ searchTerm }) => {
                   </td>
                   <td className="border-b border-[#eee] py-4 px-4 dark:border-strokedark">
                     <p className="font-medium text-black dark:text-white">
-                      {e?.Role?.roleName}
+                      {e?.role?.roleName}
                     </p>
                   </td>
 
@@ -213,9 +208,7 @@ const UserTable = ({ searchTerm }) => {
       </div>
       <div className="flex justify-center">
         <div className=" w-full  flex flex-col justify-between ">
-          {/* Container for Rows Per Page Dropdown and Page Numbers */}
           <div className="flex items-center justify-between px-4 py-2">
-            {/* Rows Per Page Dropdown */}
             <div className="dropdown inline-block relative">
               <span>Rows per page:</span>
               <select
@@ -231,9 +224,8 @@ const UserTable = ({ searchTerm }) => {
                 <option value={50}>50</option>
               </select>
             </div>
-            {/* Page Navigation Buttons */}
+
             <div className="flex items-center justify-end flex-grow space-x-2">
-              {/* Previous Button */}
               <button
                 onClick={handlePrevPage}
                 disabled={page === 1}
@@ -245,65 +237,23 @@ const UserTable = ({ searchTerm }) => {
               >
                 <FcPrevious />
               </button>
-              {/* Selectable Page Numbers */}
+
               <div className="flex space-x-2">
-                {/* Render first page */}
-                {totalPages > 1 && (
+                {pages.map((pageNumber) => (
                   <button
-                    key={1}
+                    key={pageNumber}
                     onClick={handlePage}
                     className={`px-3 py-1 rounded-md ${
-                      1 === page
+                      pageNumber === page
                         ? 'bg-blue-500 text-white'
                         : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
                     }`}
                   >
-                    {1}
+                    {pageNumber}
                   </button>
-                )}
-                {/* Render ellipsis if necessary */}
-                {page > 4 && totalPages > 2 && (
-                  <span className="px-3 py-1">...</span>
-                )}
-                {/* Render pages closer to the current page */}
-                {pages
-                  .filter(
-                    (pageNumber) =>
-                      pageNumber > page - 2 && pageNumber < page + 2,
-                  )
-                  .map((pageNumber) => (
-                    <button
-                      key={pageNumber}
-                      onClick={handlePage}
-                      className={`px-3 py-1 rounded-md ${
-                        pageNumber === page
-                          ? 'bg-blue-500 text-white'
-                          : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-                      }`}
-                    >
-                      {pageNumber}
-                    </button>
-                  ))}
-                {/* Render ellipsis if necessary */}
-                {page < totalPages - 3 && totalPages > 2 && (
-                  <span className="px-3 py-1">...</span>
-                )}
-                {/* Render last page */}
-                {totalPages > 1 && (
-                  <button
-                    key={totalPages}
-                    onClick={handlePage}
-                    className={`px-3 py-1 rounded-md ${
-                      totalPages === page
-                        ? 'bg-blue-500 text-white'
-                        : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-                    }`}
-                  >
-                    {totalPages}
-                  </button>
-                )}
+                ))}
               </div>
-              {/* Next Button */}
+
               <button
                 onClick={handleNextPage}
                 disabled={page === totalPages}
@@ -319,22 +269,6 @@ const UserTable = ({ searchTerm }) => {
           </div>
         </div>
       </div>
-      {/* <div className="flex justify-center">
-        <div className="border border-stroke rounded-md w-125  bg-slate-50 shadow-md flex flex-col justify-between ">
-          <div className="dropdown inline-block relative my-2">
-            <span className="ml-3">Rows per page:</span>
-            <select
-              value={limit}
-              onChange={handlePage}
-              className="ml-2 text-sm border border-stroke"
-            >
-              {pages.map((page, index) => (
-                <option key={index}>{page}</option>
-              ))}
-            </select>
-          </div>
-        </div>
-      </div> */}
     </>
   );
 };

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import BreadcrumbNav from '../../components/Breadcrumbs/BreadcrumbNav';
 import DefaultLayout from '../../layout/DefaultLayout';
@@ -47,6 +47,16 @@ const PayrollAddForm = () => {
       showErrorToast('An error occurred while adding payroll');
     }
   };
+  //NetPay Calulations
+  useEffect(() => {
+    setFormValues({
+      ...formValues,
+      netPay:
+        parseInt(formValues.salary || 0, 10) +
+        parseInt(formValues.bonus || 0, 10) -
+        parseInt(formValues.deductions || 0, 10),
+    });
+  }, [formValues.salary, formValues.bonus, formValues.deductions]);
 
   return (
     <DefaultLayout>

@@ -2,6 +2,17 @@ import { apiSlice } from './apiSlice';
 
 export const expenseSlice = apiSlice.injectEndpoints({
   endpoints: (builder) => ({
+    // Get all expenses with pagination and search
+    getExpensesByCompanyId: builder.query({
+      query: ({ companyId, page, limit, searchTerm }) => {
+        let queryString = `/expenses/company/${companyId}?page=${page}&limit=${limit}`;
+        if (searchTerm) {
+          queryString += `&search=${searchTerm}`;
+        }
+        return queryString;
+      },
+      providesTags: ['Expense'],
+    }),
     // Get all expenses
     getAllExpenses: builder.query({
       query: () => '/expenses',
@@ -49,6 +60,7 @@ export const expenseSlice = apiSlice.injectEndpoints({
 });
 
 export const {
+  useGetExpensesByCompanyIdQuery,
   useGetAllExpensesQuery,
   useGetExpenseQuery,
   useCreateExpenseMutation,

@@ -11,6 +11,16 @@ export const payrollSlice = apiSlice.injectEndpoints({
       },
       providesTags: ['Payroll'],
     }),
+    getPayrollByCompanyId: builder.query({
+      query: ({ companyId, page, limit, searchTerm }) => {
+        if (searchTerm) {
+          return `/payroll/company/${companyId}?search=${searchTerm}&page=${page}&limit=${limit}`;
+        } else {
+          return `/payroll/company/${companyId}?page=${page}&limit=${limit}`;
+        }
+      },
+      providesTags: ['Payroll'],
+    }),
 
     // Get a specific payroll record by ID
     getPayrollRecord: builder.query({
@@ -53,6 +63,7 @@ export const payrollSlice = apiSlice.injectEndpoints({
 });
 
 export const {
+  useGetPayrollByCompanyIdQuery,
   useGetAllPayrollRecordsQuery,
   useGetPayrollRecordQuery,
   useCreatePayrollRecordMutation,

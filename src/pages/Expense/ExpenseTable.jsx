@@ -2,9 +2,9 @@ import { CiEdit } from 'react-icons/ci';
 import { IoEyeOutline } from 'react-icons/io5';
 import { RiDeleteBinLine } from 'react-icons/ri';
 import { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import {
-  useGetAllExpensesQuery,
+  useGetExpensesByCompanyIdQuery,
   useDeleteExpenseMutation,
 } from '../../services/expenseSlice';
 import Loader from '../../common/Loader';
@@ -18,7 +18,6 @@ const ExpenseTable = ({ searchTerm }) => {
   const [totalPages, setTotalPages] = useState(0);
   const [startIndex, setStartIndex] = useState(0);
   const [expensesToShow, setExpensesToShow] = useState([]);
-  const [isLoading, setIsLoading] = useState(false);
   const [pages, setPages] = useState([]);
   const navigate = useNavigate();
   const { showErrorToast, showSuccessToast } = useToast();
@@ -28,27 +27,26 @@ const ExpenseTable = ({ searchTerm }) => {
     isLoading: getExpensesLoading,
     isError,
     refetch,
-  } = useGetAllExpensesQuery();
+  } = useGetExpensesByCompanyIdQuery({ page, limit, searchTerm });
+
   const [deleteExpense, { isLoading: isDeleteLoading }] =
     useDeleteExpenseMutation();
   const [deleteId, setDeleteId] = useState(null);
 
   useEffect(() => {
     refetch();
-  }, [searchTerm]);
+  }, [searchTerm, page, limit]);
 
   useEffect(() => {
-    if (!getExpensesLoading && !isError && expenses?.length > 0) {
-      const totalPagesCount = Math.ceil(expenses.length / limit);
+    if (!getExpensesLoading && !isError && expenses?.results > 0) {
+      const totalPagesCount = Math.ceil(expenses.results / limit);
       setTotalPages(totalPagesCount);
-      const updatedExpenses = expenses.slice(startIndex, startIndex + limit);
-      setExpensesToShow(updatedExpenses);
+      setExpensesToShow(expenses.data); // Ensure expenses.data is correctly populated
       const updatedPages = Array.from(
         { length: totalPagesCount },
         (_, i) => i + 1,
       );
       setPages(updatedPages);
-      setIsLoading(false);
     }
   }, [getExpensesLoading, isError, expenses, limit, startIndex]);
 

@@ -2,33 +2,38 @@ import { CiEdit } from 'react-icons/ci';
 import { IoEyeOutline } from 'react-icons/io5';
 import { RiDeleteBinLine } from 'react-icons/ri';
 import { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import {
-  useGetAllPayrollRecordsQuery,
+  useGetPayrollByCompanyIdQuery,
   useDeletePayrollRecordMutation,
 } from '../../services/payrollSlice';
 import Loader from '../../common/Loader';
 import DeleteModal from '../../components/DeleteModal';
 import { FcNext, FcPrevious } from 'react-icons/fc';
 import useToast from '../../hooks/useToast';
+import { useSelector } from 'react-redux';
 
 const PayrollTable = ({ searchTerm }) => {
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(10);
   const [totalPages, setTotalPages] = useState(0);
-  const [startIndex, setStartIndex] = useState(0);
   const [payrollsToShow, setPayrollsToShow] = useState([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [pages, setPages] = useState([]);
   const navigate = useNavigate();
   const { showErrorToast, showSuccessToast } = useToast();
+  const { user } = useSelector((state) => state.auth);
 
   const {
     data: payrolls,
     isLoading: getPayrollsLoading,
     isError,
     refetch,
-  } = useGetAllPayrollRecordsQuery();
+  } = useGetPayrollByCompanyIdQuery({
+    companyId: user?.companyId,
+    page,
+    limit,
+    searchTerm,
+  });
+
   const [deletePayrollRecord, { isLoading: isDeleteLoading }] =
     useDeletePayrollRecordMutation();
   const [deleteId, setDeleteId] = useState(null);
@@ -38,19 +43,12 @@ const PayrollTable = ({ searchTerm }) => {
   }, [searchTerm]);
 
   useEffect(() => {
-    if (!getPayrollsLoading && !isError && payrolls?.length > 0) {
-      const totalPagesCount = Math.ceil(payrolls.length / limit);
+    if (payrolls && payrolls.data && payrolls.results > 0) {
+      const totalPagesCount = Math.ceil(payrolls.results / limit);
       setTotalPages(totalPagesCount);
-      const updatedPayrolls = payrolls.slice(startIndex, startIndex + limit);
-      setPayrollsToShow(updatedPayrolls);
-      const updatedPages = Array.from(
-        { length: totalPagesCount },
-        (_, i) => i + 1,
-      );
-      setPages(updatedPages);
-      setIsLoading(false);
+      setPayrollsToShow(payrolls.data);
     }
-  }, [getPayrollsLoading, isError, payrolls, limit, startIndex]);
+  }, [payrolls, limit]);
 
   const handlePage = (e) => {
     setPage(parseInt(e.target.textContent));
@@ -68,6 +66,7 @@ const PayrollTable = ({ searchTerm }) => {
     try {
       await deletePayrollRecord(id).unwrap();
       showSuccessToast('Payroll Record Deleted Successfully!');
+      refetch(); // Refetch the payroll records after deletion
     } catch (err) {
       showErrorToast('An error occurred while deleting the payroll record');
     }
@@ -115,7 +114,7 @@ const PayrollTable = ({ searchTerm }) => {
                 <tr key={payroll.id}>
                   <td className="border-b border-[#eee] py-4 px-4 pl-9 dark:border-strokedark xl:pl-11">
                     <p className="font-medium text-black dark:text-white">
-                      {startIndex + index + 1}
+                      {index + 1}
                     </p>
                   </td>
                   <td className="border-b border-[#eee] py-4 px-4 dark:border-strokedark">
@@ -220,31 +219,8 @@ const PayrollTable = ({ searchTerm }) => {
               </button>
               {/* Selectable Page Numbers */}
               <div className="flex space-x-2">
-                {/* Render first page */}
-                {totalPages > 1 && (
-                  <button
-                    key={1}
-                    onClick={handlePage}
-                    className={`px-3 py-1 rounded-md ${
-                      1 === page
-                        ? 'bg-blue-500 text-white'
-                        : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-                    }`}
-                  >
-                    {1}
-                  </button>
-                )}
-                {/* Render ellipsis if necessary */}
-                {page > 4 && totalPages > 2 && (
-                  <span className="px-3 py-1">...</span>
-                )}
-                {/* Render pages closer to the current page */}
-                {pages
-                  .filter(
-                    (pageNumber) =>
-                      pageNumber > page - 2 && pageNumber < page + 2,
-                  )
-                  .map((pageNumber) => (
+                {Array.from({ length: totalPages }, (_, i) => i + 1).map(
+                  (pageNumber) => (
                     <button
                       key={pageNumber}
                       onClick={handlePage}
@@ -256,24 +232,7 @@ const PayrollTable = ({ searchTerm }) => {
                     >
                       {pageNumber}
                     </button>
-                  ))}
-                {/* Render ellipsis if necessary */}
-                {page < totalPages - 3 && totalPages > 2 && (
-                  <span className="px-3 py-1">...</span>
-                )}
-                {/* Render last page */}
-                {totalPages > 1 && (
-                  <button
-                    key={totalPages}
-                    onClick={handlePage}
-                    className={`px-3 py-1 rounded-md ${
-                      totalPages === page
-                        ? 'bg-blue-500 text-white'
-                        : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-                    }`}
-                  >
-                    {totalPages}
-                  </button>
+                  ),
                 )}
               </div>
               {/* Next Button */}

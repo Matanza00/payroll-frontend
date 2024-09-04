@@ -2,7 +2,10 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import BreadcrumbNav from '../../components/Breadcrumbs/BreadcrumbNav';
 import DefaultLayout from '../../layout/DefaultLayout';
-import { useCreatePayrollRecordMutation } from '../../services/payrollSlice';
+import {
+  useCreatePayrollRecordMutation,
+  useGetLatestPayrollByEmployeeIdQuery,
+} from '../../services/payrollSlice';
 import useToast from '../../hooks/useToast';
 import LoadingButton from '../../components/LoadingButton';
 
@@ -18,10 +21,42 @@ const PayrollAddForm = () => {
     payDate: '',
   });
 
+  const [employeeId, setEmployeeId] = useState(null); // Separate employeeId state
+  const [previousPayroll, setPreviousPayroll] = useState({
+    prevSalary: '',
+    prevBonus: '',
+    prevDeductions: '',
+    prevNetPay: '',
+    prevPayDate: '',
+  });
+
+  const { data: latestPayrollData, isLoading: LatestPayrollLoader } =
+    useGetLatestPayrollByEmployeeIdQuery(employeeId, {
+      skip: !employeeId, // Skip query if employeeId is not set
+    });
+
   const [AddPayroll, { isLoading }] = useCreatePayrollRecordMutation();
+
+  // Trigger the fetch for the previous payroll once employeeId is updated
+  useEffect(() => {
+    if (latestPayrollData && employeeId) {
+      setPreviousPayroll({
+        prevSalary: latestPayrollData.salary || '',
+        prevBonus: latestPayrollData.bonus || '',
+        prevDeductions: latestPayrollData.deductions || '',
+        prevNetPay: latestPayrollData.netPay || '',
+        prevPayDate: latestPayrollData.payDate?.slice(0, 10) || '',
+      });
+    }
+  }, [latestPayrollData, employeeId]);
 
   const handleChangeValue = (e) => {
     const { name, value } = e.target;
+
+    if (name === 'employeeId') {
+      setEmployeeId(value); // Set the employeeId
+    }
+
     setFormValues({
       ...formValues,
       [name]: value,
@@ -47,7 +82,8 @@ const PayrollAddForm = () => {
       showErrorToast('An error occurred while adding payroll');
     }
   };
-  //NetPay Calulations
+
+  // NetPay Calculations
   useEffect(() => {
     setFormValues({
       ...formValues,
@@ -67,7 +103,8 @@ const PayrollAddForm = () => {
           pagePrevPath="payrolls"
         />
         <div className="grid grid-cols-5 gap-8">
-          <div className="col-span-5 xl:col-span-3">
+          <div className="col-span-5 ">
+            {/* Payroll Information */}
             <div className="rounded-sm border border-stroke bg-white shadow-default dark:border-strokedark dark:bg-boxdark">
               <div className="border-b border-stroke py-4 px-7 dark:border-strokedark">
                 <h3 className="font-medium text-md text-black dark:text-white">
@@ -76,106 +113,108 @@ const PayrollAddForm = () => {
               </div>
               <div className="p-7">
                 <form onSubmit={handleSubmit}>
-                  <div className="mb-5.5">
-                    <label
-                      className="mb-3 block text-md font-medium text-black dark:text-white"
-                      htmlFor="employeeId"
-                    >
-                      Employee ID
-                    </label>
-                    <input
-                      className="w-full rounded border border-stroke bg-gray py-3 px-4 text-black focus:border-primary focus-visible:outline-none dark:border-strokedark dark:bg-meta-4 dark:text-white dark:focus:border-primary"
-                      type="text"
-                      name="employeeId"
-                      id="employeeId"
-                      placeholder="Enter Employee ID"
-                      onChange={handleChangeValue}
-                      value={formValues.employeeId}
-                    />
-                  </div>
-                  <div className="mb-5.5">
-                    <label
-                      className="mb-3 block text-md font-medium text-black dark:text-white"
-                      htmlFor="salary"
-                    >
-                      Salary
-                    </label>
-                    <input
-                      className="w-full rounded border border-stroke bg-gray py-3 px-4 text-black focus:border-primary focus-visible:outline-none dark:border-strokedark dark:bg-meta-4 dark:text-white dark:focus:border-primary"
-                      type="text"
-                      name="salary"
-                      id="salary"
-                      placeholder="Enter Salary"
-                      onChange={handleChangeValue}
-                      value={formValues.salary}
-                    />
-                  </div>
-                  <div className="mb-5.5">
-                    <label
-                      className="mb-3 block text-md font-medium text-black dark:text-white"
-                      htmlFor="bonus"
-                    >
-                      Bonus
-                    </label>
-                    <input
-                      className="w-full rounded border border-stroke bg-gray py-3 px-4 text-black focus:border-primary focus-visible:outline-none dark:border-strokedark dark:bg-meta-4 dark:text-white dark:focus:border-primary"
-                      type="text"
-                      name="bonus"
-                      id="bonus"
-                      placeholder="Enter Bonus (optional)"
-                      onChange={handleChangeValue}
-                      value={formValues.bonus}
-                    />
-                  </div>
-                  <div className="mb-5.5">
-                    <label
-                      className="mb-3 block text-md font-medium text-black dark:text-white"
-                      htmlFor="deductions"
-                    >
-                      Deductions
-                    </label>
-                    <input
-                      className="w-full rounded border border-stroke bg-gray py-3 px-4 text-black focus:border-primary focus-visible:outline-none dark:border-strokedark dark:bg-meta-4 dark:text-white dark:focus:border-primary"
-                      type="text"
-                      name="deductions"
-                      id="deductions"
-                      placeholder="Enter Deductions (optional)"
-                      onChange={handleChangeValue}
-                      value={formValues.deductions}
-                    />
-                  </div>
-                  <div className="mb-5.5">
-                    <label
-                      className="mb-3 block text-md font-medium text-black dark:text-white"
-                      htmlFor="netPay"
-                    >
-                      Net Pay
-                    </label>
-                    <input
-                      className="w-full rounded border border-stroke bg-gray py-3 px-4 text-black focus:border-primary focus-visible:outline-none dark:border-strokedark dark:bg-meta-4 dark:text-white dark:focus:border-primary"
-                      type="text"
-                      name="netPay"
-                      id="netPay"
-                      placeholder="Enter Net Pay"
-                      onChange={handleChangeValue}
-                      value={formValues.netPay}
-                    />
-                  </div>
-                  <div className="mb-5.5">
-                    <label
-                      className="mb-3 block text-md font-medium text-black dark:text-white"
-                      htmlFor="payDate"
-                    >
-                      Pay Date
-                    </label>
-                    <input
-                      className="w-full rounded border border-stroke bg-gray py-3 px-4 text-black focus:border-primary focus-visible:outline-none dark:border-strokedark dark:bg-meta-4 dark:text-white dark:focus:border-primary"
-                      type="date"
-                      name="payDate"
-                      id="payDate"
-                      onChange={handleChangeValue}
-                      value={formValues.payDate}
-                    />
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <div className="mb-5.5">
+                      <label
+                        className="mb-3 block text-md font-medium text-black dark:text-white"
+                        htmlFor="employeeId"
+                      >
+                        Employee ID
+                      </label>
+                      <input
+                        className="w-full rounded border border-stroke bg-gray py-3 px-4 text-black focus:border-primary focus-visible:outline-none dark:border-strokedark dark:bg-meta-4 dark:text-white dark:focus:border-primary"
+                        type="text"
+                        name="employeeId"
+                        id="employeeId"
+                        placeholder="Enter Employee ID"
+                        onChange={handleChangeValue}
+                        value={formValues.employeeId}
+                      />
+                    </div>
+                    <div className="mb-5.5">
+                      <label
+                        className="mb-3 block text-md font-medium text-black dark:text-white"
+                        htmlFor="salary"
+                      >
+                        Salary
+                      </label>
+                      <input
+                        className="w-full rounded border border-stroke bg-gray py-3 px-4 text-black focus:border-primary focus-visible:outline-none dark:border-strokedark dark:bg-meta-4 dark:text-white dark:focus:border-primary"
+                        type="text"
+                        name="salary"
+                        id="salary"
+                        placeholder="Enter Salary"
+                        onChange={handleChangeValue}
+                        value={formValues.salary}
+                      />
+                    </div>
+                    <div className="mb-5.5">
+                      <label
+                        className="mb-3 block text-md font-medium text-black dark:text-white"
+                        htmlFor="bonus"
+                      >
+                        Bonus
+                      </label>
+                      <input
+                        className="w-full rounded border border-stroke bg-gray py-3 px-4 text-black focus:border-primary focus-visible:outline-none dark:border-strokedark dark:bg-meta-4 dark:text-white dark:focus:border-primary"
+                        type="text"
+                        name="bonus"
+                        id="bonus"
+                        placeholder="Enter Bonus (optional)"
+                        onChange={handleChangeValue}
+                        value={formValues.bonus}
+                      />
+                    </div>
+                    <div className="mb-5.5">
+                      <label
+                        className="mb-3 block text-md font-medium text-black dark:text-white"
+                        htmlFor="deductions"
+                      >
+                        Deductions
+                      </label>
+                      <input
+                        className="w-full rounded border border-stroke bg-gray py-3 px-4 text-black focus:border-primary focus-visible:outline-none dark:border-strokedark dark:bg-meta-4 dark:text-white dark:focus:border-primary"
+                        type="text"
+                        name="deductions"
+                        id="deductions"
+                        placeholder="Enter Deductions (optional)"
+                        onChange={handleChangeValue}
+                        value={formValues.deductions}
+                      />
+                    </div>
+                    <div className="mb-5.5">
+                      <label
+                        className="mb-3 block text-md font-medium text-black dark:text-white"
+                        htmlFor="netPay"
+                      >
+                        Net Pay
+                      </label>
+                      <input
+                        className="w-full rounded border border-stroke bg-gray py-3 px-4 text-black focus:border-primary focus-visible:outline-none dark:border-strokedark dark:bg-meta-4 dark:text-white dark:focus:border-primary"
+                        type="text"
+                        name="netPay"
+                        id="netPay"
+                        placeholder="Enter Net Pay"
+                        onChange={handleChangeValue}
+                        value={formValues.netPay}
+                      />
+                    </div>
+                    <div className="mb-5.5">
+                      <label
+                        className="mb-3 block text-md font-medium text-black dark:text-white"
+                        htmlFor="payDate"
+                      >
+                        Pay Date
+                      </label>
+                      <input
+                        className="w-full rounded border border-stroke bg-gray py-3 px-4 text-black focus:border-primary focus-visible:outline-none dark:border-strokedark dark:bg-meta-4 dark:text-white dark:focus:border-primary"
+                        type="date"
+                        name="payDate"
+                        id="payDate"
+                        onChange={handleChangeValue}
+                        value={formValues.payDate}
+                      />
+                    </div>
                   </div>
                   <div className="flex justify-end gap-4.5">
                     <button
@@ -202,6 +241,55 @@ const PayrollAddForm = () => {
                     </>
                   </div>
                 </form>
+              </div>
+            </div>
+
+            {/* Previous Payroll Information */}
+            <div className="rounded-sm border border-stroke bg-white shadow-default dark:border-strokedark dark:bg-boxdark mt-8">
+              <div className="border-b border-stroke py-4 px-7 dark:border-strokedark">
+                <h3 className="font-medium text-md text-black dark:text-white">
+                  Previous Payroll Information
+                </h3>
+              </div>
+              <div className="p-7 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div className="mb-5.5">
+                  <label className="block text-md font-medium text-black dark:text-white">
+                    Previous Salary
+                  </label>
+                  <p className="dark:text-white">
+                    {previousPayroll.prevSalary}
+                  </p>
+                </div>
+                <div className="mb-5.5">
+                  <label className="block text-md font-medium text-black dark:text-white">
+                    Previous Bonus
+                  </label>
+                  <p className="dark:text-white">{previousPayroll.prevBonus}</p>
+                </div>
+                <div className="mb-5.5">
+                  <label className="block text-md font-medium text-black dark:text-white">
+                    Previous Deductions
+                  </label>
+                  <p className="dark:text-white">
+                    {previousPayroll.prevDeductions}
+                  </p>
+                </div>
+                <div className="mb-5.5">
+                  <label className="block text-md font-medium text-black dark:text-white">
+                    Previous NetPay
+                  </label>
+                  <p className="dark:text-white">
+                    {previousPayroll.prevNetPay}
+                  </p>
+                </div>
+                <div className="mb-5.5">
+                  <label className="block text-md font-medium text-black dark:text-white">
+                    Previous Pay Date
+                  </label>
+                  <p className="dark:text-white">
+                    {previousPayroll.prevPayDate}
+                  </p>
+                </div>
               </div>
             </div>
           </div>

@@ -191,7 +191,8 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen }) => {
           to="/"
           className="text-white font-black text-4xl tracking-widest flex w-full gap-2 items-center"
         >
-          <img src={Logo} alt="SOS Logo" className="w-22 h-24" /> PayRoll
+          {/* <img src={Logo} alt="SOS Logo" className="w-22 h-24" />  */}
+          <div className="p-10">Payroll</div>
         </NavLink>
 
         <button

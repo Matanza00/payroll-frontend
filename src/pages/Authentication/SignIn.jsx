@@ -53,7 +53,7 @@ const SignIn = () => {
           <div className="text-center">
             <Link className="mb-5 inline-block" to="/">
               <h1 className="text-white text-3xl font-extrabold">
-                Clinic Management System
+                Payroll Management System
               </h1>
             </Link>
             <p className="text-white text-xl animate-bounce">
@@ -69,7 +69,7 @@ const SignIn = () => {
         <div className="w-full xl:w-1/2 xl:border-l-2 border-gray-600 flex justify-center">
           <div className="bg-white bg-opacity-20 backdrop-filter backdrop-blur-lg rounded-2xl p-12 shadow-lg w-full max-w-lg mx-auto">
             <h2 className="text-white text-3xl font-bold mb-6 text-center">
-              Sign In to FMS
+              Sign In to PayRoll
             </h2>
             <form onSubmit={onSubmits}>
               <div className="mb-4">

@@ -35,6 +35,11 @@ export const benefitsSlice = apiSlice.injectEndpoints({
       invalidatesTags: ['Benefits'],
     }),
 
+    // Get the latest/previous Benefits record by employeeId
+    getLastDateBenefitRecords: builder.query({
+      query: (employeeId) => `/benefits/latest/${employeeId}`,
+      providesTags: ['Benefits'],
+    }),
     // Update a benefit record
     updateBenefit: builder.mutation({
       query: ({ id, ...data }) => ({
@@ -63,6 +68,7 @@ export const {
   useGetBenefitsByCompanyIdQuery,
   useGetAllBenefitsQuery,
   useGetBenefitQuery,
+  useGetLastDateBenefitRecordsQuery,
   useCreateBenefitMutation,
   useUpdateBenefitMutation,
   useDeleteBenefitMutation,

@@ -38,6 +38,12 @@ export const payrollSlice = apiSlice.injectEndpoints({
       invalidatesTags: ['Payroll'],
     }),
 
+    // Get the latest/previous payroll record by employeeId
+    getLatestPayrollByEmployeeId: builder.query({
+      query: (employeeId) => `/payroll/latest/${employeeId}`,
+      providesTags: ['Payroll'],
+    }),
+
     // Update a payroll record
     updatePayrollRecord: builder.mutation({
       query: ({ id, ...data }) => ({
@@ -66,6 +72,7 @@ export const {
   useGetPayrollByCompanyIdQuery,
   useGetAllPayrollRecordsQuery,
   useGetPayrollRecordQuery,
+  useGetLatestPayrollByEmployeeIdQuery,
   useCreatePayrollRecordMutation,
   useUpdatePayrollRecordMutation,
   useDeletePayrollRecordMutation,

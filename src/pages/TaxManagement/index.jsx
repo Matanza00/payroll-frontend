@@ -4,16 +4,27 @@ import { IoDocumentTextOutline } from 'react-icons/io5';
 import { Link } from 'react-router-dom';
 import DefaultLayout from '../../layout/DefaultLayout';
 import Breadcrumb from '../../components/Breadcrumbs/Breadcrumb';
-import { useGetAllTaxesQuery } from '../../services/taxManagementSlice';
+import { useGetAllTaxesFromTaxRouteQuery } from '../../services/taxManagementSlice';
 import TaxManagementTable from './TaxManagementTable';
 
 const TaxManagementIndex = () => {
   const [searchTerm, setSearchTerm] = useState('');
+  const [queryParams, setQueryParams] = useState({
+    page: 1,
+    limit: 10,
+    search: '',
+  });
 
-  const handleSearch = (e) => {
-    const { value } = e.target;
-    setSearchTerm(value);
+  const handleSearch = () => {
+    setQueryParams((prev) => ({
+      ...prev,
+      search: searchTerm,
+    }));
   };
+
+  // Call the query with the search term
+  const { data, error, isLoading } =
+    useGetAllTaxesFromTaxRouteQuery(queryParams);
 
   return (
     <DefaultLayout>
@@ -26,11 +37,23 @@ const TaxManagementIndex = () => {
             name="search"
             placeholder="Search"
             value={searchTerm}
-            onChange={handleSearch}
+            onChange={(e) => setSearchTerm(e.target.value)}
           />
-          <button type="submit" className="absolute right-0 top-0 mt-6 mr-5">
+          <button
+            type="button"
+            className="absolute right-0 top-0 mt-6 mr-5"
+            onClick={handleSearch} // Trigger the search on click
+          >
             <FaSearch />
           </button>
+        </div>
+        <div className="flex items-end gap-2">
+          <Link
+            to="parameters"
+            className="btn h-[30px] min-h-[30px] text-sm border-slate-200 hover:bg-opacity-70 dark:text-white dark:bg-slate-700 dark:border-slate-700 dark:hover:bg-opacity-70 transition duration-150 ease-in-out rounded-md"
+          >
+            <span className="text-sm">Parameters</span>
+          </Link>
         </div>
         <div className="flex items-end gap-2">
           <Link
@@ -44,7 +67,14 @@ const TaxManagementIndex = () => {
           </Link>
         </div>
       </div>
-      <TaxManagementTable searchTerm={searchTerm} />
+
+      {/* Pass the searchTerm and query data to TaxManagementTable */}
+      <TaxManagementTable
+        data={data}
+        isLoading={isLoading}
+        error={error}
+        searchTerm={searchTerm}
+      />
     </DefaultLayout>
   );
 };

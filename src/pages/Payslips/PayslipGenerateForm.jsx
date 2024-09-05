@@ -6,7 +6,7 @@ import { useCreatePaySlipMutation } from '../../services/payslipSlice';
 import useToast from '../../hooks/useToast';
 import LoadingButton from '../../components/LoadingButton';
 
-const PayslipAddForm = () => {
+const PayslipGenerateForm = () => {
   const navigate = useNavigate();
   const { showErrorToast, showSuccessToast } = useToast();
   const [formValues, setFormValues] = useState({
@@ -15,7 +15,7 @@ const PayslipAddForm = () => {
     generatedBy: '',
   });
 
-  const [AddPayslip, { isLoading }] = useCreatePaySlipMutation();
+  const [generatePayslip, { isLoading }] = useCreatePaySlipMutation();
 
   const handleChangeValue = (e) => {
     const { name, value } = e.target;
@@ -28,14 +28,39 @@ const PayslipAddForm = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      await AddPayslip({
+      const result = await generatePayslip({
         ...formValues,
+        payrollId: parseInt(formValues.payrollId, 10), // Convert payrollId to integer
         slipDate: new Date(formValues.slipDate),
       }).unwrap();
-      showSuccessToast('Payslip Added Successfully!');
+
+      showSuccessToast('Payslip Generated Successfully!');
+      downloadPayslip(result.id);
       navigate(-1);
     } catch (err) {
-      showErrorToast('An error occurred while adding payslip');
+      showErrorToast('An error occurred while generating the payslip');
+      console.error('Error submitting payslip:', err); // Log the error
+    }
+  };
+
+  const downloadPayslip = async (id) => {
+    try {
+      const response = await fetch(`/api/v1/pay-slips/pdf/${id}`);
+      if (response.ok) {
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.setAttribute('download', `payslip_${id}.pdf`);
+        document.body.appendChild(link);
+        link.click();
+        link.remove(); // Clean up
+        window.URL.revokeObjectURL(url); // Free up memory
+      } else {
+        console.error('Failed to fetch PDF');
+      }
+    } catch (error) {
+      console.error('Error downloading payslip:', error);
     }
   };
 
@@ -43,7 +68,7 @@ const PayslipAddForm = () => {
     <DefaultLayout>
       <div className="mx-auto max-w-600">
         <BreadcrumbNav
-          pageName="Add Payslip"
+          pageName="Generate Payslip"
           pageNameprev="Payslips"
           pagePrevPath="payslips"
         />
@@ -52,7 +77,7 @@ const PayslipAddForm = () => {
             <div className="rounded-sm border border-stroke bg-white shadow-default dark:border-strokedark dark:bg-boxdark">
               <div className="border-b border-stroke py-4 px-7 dark:border-strokedark">
                 <h3 className="font-medium text-md text-black dark:text-white">
-                  Payslip Information
+                  Generate Payslip
                 </h3>
               </div>
               <div className="p-7">
@@ -115,21 +140,19 @@ const PayslipAddForm = () => {
                     >
                       Cancel
                     </button>
-                    <>
-                      {isLoading ? (
-                        <LoadingButton
-                          btnText="Adding..."
-                          isLoading={isLoading}
-                        />
-                      ) : (
-                        <button
-                          className="flex justify-center rounded bg-primary py-2 px-6 font-medium text-white hover:bg-opacity-90"
-                          type="submit"
-                        >
-                          Add
-                        </button>
-                      )}
-                    </>
+                    {isLoading ? (
+                      <LoadingButton
+                        btnText="Generating..."
+                        isLoading={isLoading}
+                      />
+                    ) : (
+                      <button
+                        className="flex justify-center rounded bg-primary py-2 px-6 font-medium text-white hover:bg-opacity-90"
+                        type="submit"
+                      >
+                        Generate
+                      </button>
+                    )}
                   </div>
                 </form>
               </div>
@@ -141,4 +164,4 @@ const PayslipAddForm = () => {
   );
 };
 
-export default PayslipAddForm;
+export default PayslipGenerateForm;

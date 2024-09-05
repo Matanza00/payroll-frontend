@@ -33,6 +33,7 @@ const PayrollTable = ({ searchTerm }) => {
     limit,
     searchTerm,
   });
+  console.log('first', payrolls);
 
   const [deletePayrollRecord, { isLoading: isDeleteLoading }] =
     useDeletePayrollRecordMutation();

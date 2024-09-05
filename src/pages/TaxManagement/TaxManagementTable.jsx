@@ -1,6 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import { CiEdit } from 'react-icons/ci';
+import { IoEyeOutline } from 'react-icons/io5';
+import { RiDeleteBinLine } from 'react-icons/ri';
+import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
-  useGetAllTaxesQuery,
+  useGetAllTaxesFromTaxRouteQuery,
   useDeleteTaxMutation,
 } from '../../services/taxManagementSlice';
 import Loader from '../../common/Loader';
@@ -8,10 +12,7 @@ import DeleteModal from '../../components/DeleteModal';
 import { FcNext, FcPrevious } from 'react-icons/fc';
 import useToast from '../../hooks/useToast';
 import { useSelector } from 'react-redux';
-import { RiDeleteBinLine } from 'react-icons/ri';
-import { useNavigate } from 'react-router-dom';
-import { CiEdit } from 'react-icons/ci';
-import { formatDateAndTime } from '../../utils/helpers';
+import { formatDateAndTime, formatDateForInput } from '../../utils/helpers';
 
 const TaxManagementTable = ({ searchTerm }) => {
   const [page, setPage] = useState(1);
@@ -23,11 +24,15 @@ const TaxManagementTable = ({ searchTerm }) => {
   const { user } = useSelector((state) => state.auth);
 
   const {
-    data: taxRecords,
+    data: taxes,
     isLoading: getTaxesLoading,
     isError,
     refetch,
-  } = useGetAllTaxesQuery();
+  } = useGetAllTaxesFromTaxRouteQuery({
+    page,
+    limit,
+    searchTerm,
+  });
 
   const [deleteTaxRecord, { isLoading: isDeleteLoading }] =
     useDeleteTaxMutation();
@@ -38,12 +43,12 @@ const TaxManagementTable = ({ searchTerm }) => {
   }, [searchTerm]);
 
   useEffect(() => {
-    if (taxRecords && taxRecords.data && taxRecords.data.length > 0) {
-      const totalPagesCount = Math.ceil(taxRecords.data.length / limit);
+    if (taxes && taxes.data && taxes.results > 0) {
+      const totalPagesCount = Math.ceil(taxes.results / limit);
       setTotalPages(totalPagesCount);
-      setTaxesToShow(taxRecords.data);
+      setTaxesToShow(taxes.data);
     }
-  }, [taxRecords, limit]);
+  }, [taxes, limit]);
 
   const handlePage = (e) => {
     setPage(parseInt(e.target.textContent));
@@ -57,136 +62,187 @@ const TaxManagementTable = ({ searchTerm }) => {
     setPage((prevPage) => Math.max(prevPage - 1, 1));
   };
 
-  const handleDelete = async (id) => {
+  const deleteTax = async (id) => {
     try {
-      await deleteTaxRecord(id);
-      showSuccessToast('Tax record deleted successfully');
-      setDeleteId(null);
-      refetch();
-    } catch (error) {
-      showErrorToast('Failed to delete tax record');
+      await deleteTaxRecord(id).unwrap();
+      showSuccessToast('Tax Record Deleted Successfully!');
+      refetch(); // Refetch the tax records after deletion
+    } catch (err) {
+      showErrorToast('An error occurred while deleting the tax record');
     }
   };
 
   if (getTaxesLoading) return <Loader />;
-  if (isError) return <div>Error loading tax records</div>;
+  if (isError) return <div>Error occurred while fetching tax records.</div>;
+  if (!taxesToShow.length) return <div>No Tax Records Found!</div>;
 
   return (
-    <div className="overflow-x-auto">
-      <table className="w-full table-auto bg-white border border-stroke rounded-sm my-2 px-5 pt-6 pb-2.5 shadow-default dark:border-strokedark dark:bg-boxdark sm:px-7.5 xl:pb-1">
-        <thead>
-          <tr className="bg-gray-2 text-left dark:bg-meta-4">
-            <th className="max-w-[10px] py-4 px-4 text-black dark:text-white">
-              S. No
-            </th>
-            <th className="min-w-[200px] py-4 px-4 text-black dark:text-white">
-              Employee ID
-            </th>
-            <th className="min-w-[250px] py-4 px-4 text-black dark:text-white">
-              Salary
-            </th>
-            <th className="min-w-[250px] py-4 px-4 text-black dark:text-white">
-              taxType
-            </th>
-            <th className="py-4 px-4 text-black dark:text-white">taxAmount</th>
-            <th className="py-4 px-4 text-black dark:text-white">Net Pay</th>
-            <th className="py-4 px-4 text-black dark:text-white">Pay Date</th>
-            <th className="py-4 px-4 text-center text-black dark:text-white">
-              Actions
-            </th>
-          </tr>
-        </thead>
-        <tbody>
-          {taxesToShow.map((tax, index) => (
-            <tr
-              key={tax.id}
-              className="border-b border-[#eee] dark:border-strokedark"
-            >
-              <td className="py-4 px-4 pl-9 xl:pl-11">
-                <p className="font-medium text-black dark:text-white">
-                  {index + 1}
-                </p>
-              </td>
-              <td className="py-4 px-4">
-                <p className="font-medium text-black dark:text-white">
-                  {tax.payroll.employeeId}
-                </p>
-              </td>
-              <td className="py-4 px-4">
-                <p className="font-medium text-black dark:text-white">
-                  {tax.payroll.salary}
-                </p>
-              </td>
-              <td className="py-4 px-4">
-                <p className="font-medium text-black dark:text-white">
-                  {tax.taxType}
-                </p>
-              </td>
-              <td className="py-4 px-4">
-                <p className="font-medium text-black dark:text-white">
-                  {tax.amount}
-                </p>
-              </td>
-              <td className="py-4 px-4">
-                <p className="font-medium text-black dark:text-white">
-                  {tax.payroll.netPay}
-                </p>
-              </td>
-              <td className="py-4 px-4">
-                <p className="font-medium text-black dark:text-white">
-                  {formatDateAndTime(tax.created_at)}
-                </p>
-              </td>
-              <td className="py-4 px-4 text-center">
-                <div className="flex justify-center space-x-2">
-                  <button
-                    className="text-blue-500 dark:text-blue-300 hover:text-blue-700 dark:hover:text-blue-500"
-                    onClick={() => navigate(`/edit-tax/${tax.id}`)}
-                  >
-                    <CiEdit />
-                  </button>
-                  <button
-                    className="text-red-500 dark:text-red-300 hover:text-red-700 dark:hover:text-red-500"
-                    onClick={() => {
-                      setDeleteId(tax.id);
-                    }}
-                  >
-                    <RiDeleteBinLine />
-                  </button>
-                </div>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-      <div className="flex justify-between items-center mt-4">
-        <div>
-          <span className="text-sm text-gray-500 dark:text-gray-400">
-            Showing {taxesToShow.length} of{' '}
-            {taxRecords.data ? taxRecords.data.length : 0} records
-          </span>
-        </div>
-        <div className="flex items-center space-x-3">
-          <button
-            className={`px-3 py-1 rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-boxdark text-sm text-gray-600 dark:text-gray-300 ${page === 1 ? 'cursor-not-allowed' : 'hover:bg-gray-100 dark:hover:bg-gray-700'}`}
-            onClick={handlePrevPage}
-            disabled={page === 1}
-          >
-            <FcPrevious />
-          </button>
-          <div className="flex items-center space-x-2">
-            Page {page} of {totalPages}
-          </div>
-          <button
-            className={`px-3 py-1 rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-boxdark text-sm text-gray-600 dark:text-gray-300 ${page === totalPages ? 'cursor-not-allowed' : 'hover:bg-gray-100 dark:hover:bg-gray-700'}`}
-            onClick={handleNextPage}
-            disabled={page === totalPages}
-          >
-            <FcNext />
-          </button>
+    <>
+      <div className="h-150 rounded-sm border border-stroke bg-white my-2 px-5 pt-6 pb-2.5 shadow-default dark:border-strokedark dark:bg-boxdark sm:px-7.5 xl:pb-1">
+        <div className="max-w-full overflow-x-auto h-[550px] overflow-y-auto">
+          <table className="w-full table-auto">
+            <thead>
+              <tr className="bg-gray-2 text-left dark:bg-meta-4">
+                <th className="max-w-[10px] py-4 px-4 text-black dark:text-white">
+                  S. No
+                </th>
+                <th className="min-w-[200px] py-4 px-4 text-black dark:text-white">
+                  Employee ID
+                </th>
+                <th className="min-w-[200px] py-4 px-4 text-black dark:text-white">
+                  Salary
+                </th>
+                <th className="min-w-[250px] py-4 px-4 text-black dark:text-white">
+                  Amount
+                </th>
+                <th className="min-w-[250px] py-4 px-4 text-black dark:text-white">
+                  Tax Type
+                </th>
+                <th className="py-4 px-4 text-black dark:text-white">Date</th>
+                <th className="py-4 px-4 text-center text-black dark:text-white">
+                  Actions
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              {taxesToShow.map((tax, index) => (
+                <tr key={tax.id}>
+                  <td className="border-b border-[#eee] py-4 px-4 pl-9 dark:border-strokedark xl:pl-11">
+                    <p className="font-medium text-black dark:text-white">
+                      {index + 1}
+                    </p>
+                  </td>
+                  <td className="border-b border-[#eee] py-4 px-4 dark:border-strokedark">
+                    <p className="font-medium text-black dark:text-white">
+                      {tax.employeeId}
+                    </p>
+                  </td>
+                  <td className="border-b border-[#eee] py-4 px-4 dark:border-strokedark">
+                    <p className="font-medium text-black dark:text-white">
+                      {tax.salary}
+                    </p>
+                  </td>
+                  <td className="border-b border-[#eee] py-4 px-4 dark:border-strokedark">
+                    <p className="font-medium text-black dark:text-white">
+                      {tax.amount}
+                    </p>
+                  </td>
+                  <td className="border-b border-[#eee] py-4 px-4 dark:border-strokedark">
+                    <p className="font-medium text-black dark:text-white">
+                      {tax.taxType}
+                    </p>
+                  </td>
+
+                  <td className="border-b border-[#eee] py-4 px-4 dark:border-strokedark">
+                    <p className="font-medium text-black dark:text-white">
+                      {formatDateForInput(tax.created_at)}
+                    </p>
+                  </td>
+                  <td className="border-b border-[#eee] py-5 px-4 dark:border-strokedark">
+                    <div className="flex items-center justify-center space-x-3.5">
+                      <button
+                        onClick={() => navigate(`view/${tax.id}`)}
+                        className="hover:text-primary"
+                      >
+                        <IoEyeOutline style={{ fontSize: '20px' }} />
+                      </button>
+                      <button
+                        onClick={() => navigate(`update/${tax.id}`)}
+                        className="hover:text-primary"
+                      >
+                        <CiEdit style={{ fontSize: '20px' }} />
+                      </button>
+                      <button
+                        onClick={() => {
+                          document.getElementById('delete_modal').showModal();
+                          setDeleteId(tax.id);
+                        }}
+                        className="hover:text-primary"
+                      >
+                        <RiDeleteBinLine style={{ fontSize: '20px' }} />
+                      </button>
+                      <DeleteModal
+                        deleteModule="Tax Record"
+                        Id={tax.id}
+                        handleDelete={() => deleteTax(deleteId)}
+                      />
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
       </div>
-    </div>
+      <div className="flex justify-center">
+        <div className="w-full flex flex-col justify-between">
+          {/* Container for Rows Per Page Dropdown and Page Numbers */}
+          <div className="flex items-center justify-between px-4 py-2">
+            {/* Rows Per Page Dropdown */}
+            <div className="dropdown inline-block relative">
+              <span>Rows per page:</span>
+              <select
+                value={limit}
+                onChange={(e) => {
+                  setPage(1);
+                  setLimit(parseInt(e.target.value));
+                }}
+                className="px-1 ml-2 text-sm border bg-slate-100 border-slate-500 rounded-sm dark:border-slate-600 dark:bg-boxdark dark:text-slate-300"
+              >
+                <option value={10}>10</option>
+                <option value={20}>20</option>
+                <option value={50}>50</option>
+              </select>
+            </div>
+            {/* Page Navigation Buttons */}
+            <div className="flex items-center justify-end flex-grow space-x-2">
+              {/* Previous Button */}
+              <button
+                onClick={handlePrevPage}
+                disabled={page === 1}
+                className={`px-2 py-2 rounded-md ${
+                  page === 1
+                    ? 'bg-slate-200 text-gray-600 cursor-not-allowed dark:bg-slate-600 dark:text-graydark'
+                    : 'bg-blue-500 text-white hover:bg-blue-600 focus:outline-none focus:bg-blue-600'
+                }`}
+              >
+                <FcPrevious />
+              </button>
+              {/* Selectable Page Numbers */}
+              <div className="flex space-x-2">
+                {Array.from({ length: totalPages }, (_, i) => i + 1).map(
+                  (pageNumber) => (
+                    <button
+                      key={pageNumber}
+                      onClick={handlePage}
+                      className={`px-3 py-1 rounded-md ${
+                        pageNumber === page
+                          ? 'bg-blue-500 text-white'
+                          : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                      }`}
+                    >
+                      {pageNumber}
+                    </button>
+                  ),
+                )}
+              </div>
+              {/* Next Button */}
+              <button
+                onClick={handleNextPage}
+                disabled={page === totalPages}
+                className={`px-2 py-2 rounded-md ${
+                  page === totalPages
+                    ? 'bg-slate-200 text-gray-600 cursor-not-allowed dark:bg-slate-600 dark:text-graydark'
+                    : 'bg-blue-500 text-white hover:bg-blue-600 focus:outline-none focus:bg-blue-600'
+                }`}
+              >
+                <FcNext />
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </>
   );
 };
 

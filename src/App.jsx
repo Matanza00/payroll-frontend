@@ -23,7 +23,7 @@ import PayrollUpdateForm from './pages/Payroll/PayrollUpdateForm';
 import PayrollView from './pages/Payroll/PayrollView';
 
 import PayslipIndex from './pages/Payslips';
-import PayslipAddForm from './pages/Payslips/PayslipAddForm';
+import PayslipGenerateForm from './pages/Payslips/PayslipGenerateForm';
 import PayslipUpdateForm from './pages/Payslips/PayslipUpdateForm';
 import PayslipView from './pages/Payslips/PaySlipView';
 
@@ -51,6 +51,9 @@ import TaxManagementIndex from './pages/TaxManagement/index';
 import TaxManagementAddForm from './pages/TaxManagement/TaxManagementAddForm';
 import TaxManagementUpdateForm from './pages/TaxManagement/TaxManagementUpdateForm';
 import TaxManagementView from './pages/TaxManagement/TaxManagementView';
+import Parameters from './pages/TaxManagement/Parameters';
+import ParametersTable from './pages/TaxManagement/Parameters/ParametersTable';
+import ParametersAddForm from './pages/TaxManagement/Parameters/ParametersAddForm';
 
 function App() {
   const [loading, setLoading] = useState(true);
@@ -105,7 +108,7 @@ function App() {
 
         {/* PaySlip Management Routes */}
         <Route path="/payslip" element={<PayslipIndex />} />
-        <Route path="/payslip/add" element={<PayslipAddForm />} />
+        <Route path="/payslip/generate" element={<PayslipGenerateForm />} />
         <Route path="/payslip/update/:id" element={<PayslipUpdateForm />} />
         <Route path="/payslip/view/:id" element={<PayslipView />} />
 
@@ -146,6 +149,11 @@ function App() {
         <Route
           path="/tax-management/view/:id"
           element={<TaxManagementView />}
+        />
+        <Route path="/tax-management/parameters" element={<Parameters />} />
+        <Route
+          path="/tax-management/parameters/add"
+          element={<ParametersAddForm />} // Assuming this is where you add new parameters
         />
       </Routes>
     </>

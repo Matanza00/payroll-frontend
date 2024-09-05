@@ -14,6 +14,42 @@ export const taxManagementSlice = apiSlice.injectEndpoints({
       providesTags: ['TaxManagement'],
     }),
 
+    // Search Query with Pagination, Sorting, and Dynamic Filters
+    getAllTaxesFromTaxRoute: builder.query({
+      query: ({
+        page = 1,
+        limit = 10,
+        sortBy = 'id',
+        sortType = 'desc', // Default to 'desc' if not specified
+        searchTerm,
+        keys,
+        filters = {},
+      }) => {
+        const params = new URLSearchParams();
+
+        // Add basic pagination, sorting parameters
+        params.append('page', page);
+        params.append('limit', limit);
+        params.append('sortBy', sortBy);
+        params.append('sortType', sortType);
+
+        // Add search parameter if provided
+        if (searchTerm) params.append('search', searchTerm);
+        if (keys) params.append('keys', keys);
+
+        // Add dynamic filters to the query params
+        Object.entries(filters).forEach(([key, value]) => {
+          if (value) {
+            params.append(key, value);
+          }
+        });
+
+        // Construct the API route with the query parameters
+        return `/tax-management/tax?${params.toString()}`;
+      },
+      providesTags: ['TaxManagement'],
+    }),
+
     // Create a new tax record
     createTax: builder.mutation({
       query: (formData) => ({
@@ -48,6 +84,7 @@ export const taxManagementSlice = apiSlice.injectEndpoints({
 export const {
   useGetAllTaxesQuery,
   useGetTaxQuery,
+  useGetAllTaxesFromTaxRouteQuery,
   useCreateTaxMutation,
   useUpdateTaxMutation,
   useDeleteTaxMutation,

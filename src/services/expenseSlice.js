@@ -25,6 +25,12 @@ export const expenseSlice = apiSlice.injectEndpoints({
       providesTags: ['Expense'],
     }),
 
+    // Get the latest/previous Expense record by employeeId
+    getLastDateExpenseRecords: builder.query({
+      query: (employeeId) => `/expenses/latest/${employeeId}`,
+      providesTags: ['Expenses'],
+    }),
+
     // Create a new expense
     createExpense: builder.mutation({
       query: (formData) => ({
@@ -63,6 +69,7 @@ export const {
   useGetExpensesByCompanyIdQuery,
   useGetAllExpensesQuery,
   useGetExpenseQuery,
+  useGetLastDateExpenseRecordsQuery,
   useCreateExpenseMutation,
   useUpdateExpenseMutation,
   useDeleteExpenseMutation,

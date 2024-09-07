@@ -22,6 +22,10 @@ import { useGetTagDriversQuery } from '../../services/tagDriverSlice';
 import { useGetDriverByCompanyIdQuery } from '../../services/driverSlice';
 import { useGetFuelByCompanyIdQuery } from '../../services/fuelSlice';
 import { useGetPeriodicByCompanyIdQuery } from '../../services/periodicSlice';
+//
+import { useGetAllUsersInfoQuery } from '../../services/usersSlice';
+import { useGetAllPayrollRecordsQuery } from '../../services/payrollSlice';
+import { useGetAllPaySlipsQuery } from '../../services/payslipSlice';
 import CardDataStats from '../../components/CardDataStats';
 import DefaultLayout from '../../layout/DefaultLayout';
 import { FaShippingFast } from 'react-icons/fa';
@@ -61,7 +65,32 @@ const ECommerce = () => {
   const handleToDateChange = (e) => {
     setToDate(e.target.value);
   };
+  //Payroll Definations
+  const {
+    data: userData,
+    error: totalUsersError,
+    isLoading: allUserLoading,
+  } = useGetAllUsersInfoQuery();
+  const totalUsers = userData?.data?.length; // Adjust this based on your actual data structure
+  console.log('totalUsers', totalUsers);
 
+  const {
+    data: payrollData,
+    error: payrollError,
+    isLoading: payrollLoading,
+  } = useGetAllPayrollRecordsQuery();
+  const totalPayroll = payrollData?.length; // Adjust this based on your actual
+  console.log('totalPayroll', totalPayroll);
+
+  const {
+    data: payslipData,
+    error: payslipError,
+    isLoading: payslipLoading,
+  } = useGetAllPaySlipsQuery();
+  const totalPayslip = payslipData?.length; // Adjust this based on your actual
+  console.log('totalPayslip', totalPayslip);
+
+  //FMS Definitions
   const {
     data: vehicleData,
     error: vehicleError,
@@ -223,8 +252,6 @@ const ECommerce = () => {
     }
   }, [vehicleData, selectedFuelStation]);
 
-  const totalVehicles = vehicleData ? vehicleData.results : 'Error'; // Adjust this based on your actual data structure
-
   // Group vehicles by station
   const vehiclesByStation = vehicleData
     ? vehicleData.data.reduce((acc, vehicle) => {
@@ -296,7 +323,7 @@ const ECommerce = () => {
       drivers: counts.drivers,
     }),
   );
-
+  const totalVehicles = 1;
   // Calculate available vehicles
   const availableVehicles = totalVehicles - totalTaggedDrivers;
 
@@ -413,8 +440,8 @@ const ECommerce = () => {
 
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2 md:gap-6 xl:grid-cols-4 2xl:gap-7.5">
         <CardDataStats
-          title="Total Drivers"
-          total={allDriverLoading ? 'Loading...' : totalDrivers}
+          title="Total Users"
+          total={allUserLoading ? 'Loading...' : totalUsers}
           rate="Pakistan"
         >
           <svg
@@ -434,8 +461,8 @@ const ECommerce = () => {
         </CardDataStats>
 
         <CardDataStats
-          title="Total Vehicles"
-          total={vehicleLoading ? 'Loading...' : totalVehicles}
+          title="Payroll Generated"
+          total={payrollLoading ? 'Loading...' : totalPayroll}
           rate="Pakistan"
         >
           <svg
@@ -455,8 +482,8 @@ const ECommerce = () => {
         </CardDataStats>
 
         <CardDataStats
-          title="Vehicle Assigned"
-          total={driverLoading ? 'Loading...' : totalTaggedDrivers}
+          title="Payslip Statistics"
+          total={payslipLoading ? 'Loading...' : totalPayslip}
           rate="Pakistan"
         >
           <FaShippingFast className="fill-primary size-5" />

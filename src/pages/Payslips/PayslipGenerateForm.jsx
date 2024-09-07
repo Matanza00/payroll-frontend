@@ -1,23 +1,14 @@
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import BreadcrumbNav from '../../components/Breadcrumbs/BreadcrumbNav';
-import DefaultLayout from '../../layout/DefaultLayout';
-import { useCreatePaySlipMutation } from '../../services/payslipSlice';
-import useToast from '../../hooks/useToast';
-import LoadingButton from '../../components/LoadingButton';
+import React, { useState } from 'react';
+import axios from 'axios';
 
 const PayslipGenerateForm = () => {
-  const navigate = useNavigate();
-  const { showErrorToast, showSuccessToast } = useToast();
   const [formValues, setFormValues] = useState({
     payrollId: '',
     slipDate: '',
     generatedBy: '',
   });
 
-  const [generatePayslip, { isLoading }] = useCreatePaySlipMutation();
-
-  const handleChangeValue = (e) => {
+  const handleChange = (e) => {
     const { name, value } = e.target;
     setFormValues({
       ...formValues,
@@ -25,142 +16,75 @@ const PayslipGenerateForm = () => {
     });
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    try {
-      const result = await generatePayslip({
-        ...formValues,
-        payrollId: parseInt(formValues.payrollId, 10), // Convert payrollId to integer
-        slipDate: new Date(formValues.slipDate),
-      }).unwrap();
+  const handleSubmit = async (event) => {
+    event.preventDefault();
 
-      showSuccessToast('Payslip Generated Successfully!');
-      downloadPayslip(result.id);
-      navigate(-1);
-    } catch (err) {
-      showErrorToast('An error occurred while generating the payslip');
-      console.error('Error submitting payslip:', err); // Log the error
+    const payrollId = parseInt(formValues.payrollId, 10);
+    if (isNaN(payrollId)) {
+      console.error('Invalid payrollId provided. Expected an integer.');
+      return;
     }
-  };
 
-  const downloadPayslip = async (id) => {
+    const requestData = {
+      payrollId: payrollId,
+      slipDate: formValues.slipDate,
+      generatedBy: formValues.generatedBy,
+    };
+
     try {
-      const response = await fetch(`/api/v1/pay-slips/pdf/${id}`);
-      if (response.ok) {
-        const blob = await response.blob();
-        const url = window.URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.href = url;
-        link.setAttribute('download', `payslip_${id}.pdf`);
-        document.body.appendChild(link);
-        link.click();
-        link.remove(); // Clean up
-        window.URL.revokeObjectURL(url); // Free up memory
-      } else {
-        console.error('Failed to fetch PDF');
-      }
+      // Create the pay slip
+      const response = await axios.post(
+        'http://localhost:8080/api/v1/pay-slips',
+        requestData,
+      );
+
+      // If the creation is successful, now generate the PDF
+      const pdfResponse = await axios.get(
+        `http://localhost:8080/api/v1/pay-slips/pdf/${response.data.id}`,
+        {
+          responseType: 'blob',
+        },
+      );
+
+      const url = window.URL.createObjectURL(
+        new Blob([pdfResponse.data], { type: 'application/pdf' }),
+      );
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', 'payslip.pdf');
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
     } catch (error) {
-      console.error('Error downloading payslip:', error);
+      console.error('Error generating payslip:', error);
     }
   };
 
   return (
-    <DefaultLayout>
-      <div className="mx-auto max-w-600">
-        <BreadcrumbNav
-          pageName="Generate Payslip"
-          pageNameprev="Payslips"
-          pagePrevPath="payslips"
-        />
-        <div className="grid grid-cols-5 gap-8">
-          <div className="col-span-5 xl:col-span-3">
-            <div className="rounded-sm border border-stroke bg-white shadow-default dark:border-strokedark dark:bg-boxdark">
-              <div className="border-b border-stroke py-4 px-7 dark:border-strokedark">
-                <h3 className="font-medium text-md text-black dark:text-white">
-                  Generate Payslip
-                </h3>
-              </div>
-              <div className="p-7">
-                <form onSubmit={handleSubmit}>
-                  <div className="mb-5.5">
-                    <label
-                      className="mb-3 block text-md font-medium text-black dark:text-white"
-                      htmlFor="payrollId"
-                    >
-                      Payroll ID
-                    </label>
-                    <input
-                      className="w-full rounded border border-stroke bg-gray py-3 px-4 text-black focus:border-primary focus-visible:outline-none dark:border-strokedark dark:bg-meta-4 dark:text-white dark:focus:border-primary"
-                      type="text"
-                      name="payrollId"
-                      id="payrollId"
-                      placeholder="Enter Payroll ID"
-                      onChange={handleChangeValue}
-                      value={formValues.payrollId}
-                    />
-                  </div>
-                  <div className="mb-5.5">
-                    <label
-                      className="mb-3 block text-md font-medium text-black dark:text-white"
-                      htmlFor="slipDate"
-                    >
-                      Slip Date
-                    </label>
-                    <input
-                      className="w-full rounded border border-stroke bg-gray py-3 px-4 text-black focus:border-primary focus-visible:outline-none dark:border-strokedark dark:bg-meta-4 dark:text-white dark:focus:border-primary"
-                      type="date"
-                      name="slipDate"
-                      id="slipDate"
-                      onChange={handleChangeValue}
-                      value={formValues.slipDate}
-                    />
-                  </div>
-                  <div className="mb-5.5">
-                    <label
-                      className="mb-3 block text-md font-medium text-black dark:text-white"
-                      htmlFor="generatedBy"
-                    >
-                      Generated By
-                    </label>
-                    <input
-                      className="w-full rounded border border-stroke bg-gray py-3 px-4 text-black focus:border-primary focus-visible:outline-none dark:border-strokedark dark:bg-meta-4 dark:text-white dark:focus:border-primary"
-                      type="text"
-                      name="generatedBy"
-                      id="generatedBy"
-                      placeholder="Enter Name of Generator"
-                      onChange={handleChangeValue}
-                      value={formValues.generatedBy}
-                    />
-                  </div>
-                  <div className="flex justify-end gap-4.5">
-                    <button
-                      className="flex justify-center rounded border border-stroke py-2 px-6 font-medium text-black dark:border-strokedark dark:text-white transition duration-150 ease-in-out hover:border-black dark:hover:border-white"
-                      type="button"
-                      onClick={() => navigate(-1)}
-                    >
-                      Cancel
-                    </button>
-                    {isLoading ? (
-                      <LoadingButton
-                        btnText="Generating..."
-                        isLoading={isLoading}
-                      />
-                    ) : (
-                      <button
-                        className="flex justify-center rounded bg-primary py-2 px-6 font-medium text-white hover:bg-opacity-90"
-                        type="submit"
-                      >
-                        Generate
-                      </button>
-                    )}
-                  </div>
-                </form>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </DefaultLayout>
+    <form onSubmit={handleSubmit}>
+      <input
+        type="text"
+        name="payrollId"
+        value={formValues.payrollId}
+        onChange={handleChange}
+        placeholder="Payroll ID"
+      />
+      <input
+        type="date"
+        name="slipDate"
+        value={formValues.slipDate}
+        onChange={handleChange}
+        placeholder="Slip Date"
+      />
+      <input
+        type="text"
+        name="generatedBy"
+        value={formValues.generatedBy}
+        onChange={handleChange}
+        placeholder="Generated By"
+      />
+      <button type="submit">Generate Payslip</button>
+    </form>
   );
 };
 
